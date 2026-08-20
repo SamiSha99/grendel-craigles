@@ -29,7 +29,7 @@ MonoBehaviour:
   MitosisSizeMultiplier: 0.7
   MitosisHueShift: 10
   MitosisVelocityBend: 30
-  CrowdingNeighborThreshold: 100
+  CrowdingNeighborThreshold: 200
   CrowdingDeathChance: 0.2
   MaxPopulation: 1000
   CraigleMesh: {fileID: 0}

@@ -18,7 +18,7 @@ MonoBehaviour:
   SpawnSpeedMin: 30
   SpawnSpeedMax: 50
   InitialSize: 1
-  PerceptionRadius: 10
+  PerceptionRadius: 20
   CohesionMaxAcceleration: 40
   SeparationDistanceFactor: 2
   SeparationMaxAcceleration: 100
@@ -31,6 +31,6 @@ MonoBehaviour:
   MitosisVelocityBend: 30
   CrowdingNeighborThreshold: 0
   CrowdingDeathChance: 0
-  MaxPopulation: 500
+  MaxPopulation: 1000
   CraigleMesh: {fileID: 0}
   VisualScaleMultiplier: 5

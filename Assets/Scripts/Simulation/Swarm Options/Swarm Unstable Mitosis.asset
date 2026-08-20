@@ -23,8 +23,8 @@ MonoBehaviour:
   SeparationDistanceFactor: 2
   SeparationMaxAcceleration: 100
   AlignmentMaxTurnSpeed: 200
-  GrowthRatePerSecond: 0.6
-  MitosisMinAge: 0.5
+  GrowthRatePerSecond: 0.05
+  MitosisMinAge: 6
   MitosisChancePerUpdate: 0.2
   MitosisSizeMultiplier: 0.7
   MitosisHueShift: 10
