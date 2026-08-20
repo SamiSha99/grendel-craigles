@@ -11,9 +11,17 @@ namespace Craigles
         private readonly List<int> neighborCountCache = new();
         private readonly List<int> pendingMitosisParents = new();
         private readonly List<int> pendingDeaths = new();
-        private readonly HashSet<int> toRemoveScratch = new();
+        private readonly HashSet<int> toRemoveCraigles = new();
         private readonly List<CraigleData> nextGenerationBuffer = new();
         private float spawnTimer;
+
+        // Neighbor lookups use a uniform grid: the world cube is cut into cellsPerAxis^3 cells,
+        // each PerceptionRadius wide, stored flat in gridCells. Rebuilt once per frame in BuildGrid.
+        private List<int>[] gridCells;
+        private int cellsPerAxis;
+        private float cachedCellSize;
+        private float cachedBoundsSize = -1f;
+
         public IReadOnlyList<CraigleData> Craigles => craigles;
         public SwarmConfig Config => config;
 
@@ -82,12 +90,13 @@ namespace Craigles
         {
             int count = craigles.Count;
             neighborCountCache.Clear();
+            BuildGrid();
 
             for (int i = 0; i < count; i++)
             {
                 CraigleData c = craigles[i];
+                Vector3Int oldCell = CellCoords(c.Position);
 
-                // Pretty unoptimized considering cuz O(n) * O(n) :(
                 GetSwarm(i, out int neighborCount, out Vector3 centroidSum,
                     out Vector3 velocitySum, out Vector3 separationSum);
                 neighborCountCache.Add(neighborCount);
@@ -103,9 +112,54 @@ namespace Craigles
                 c.Position += c.Velocity * d;
                 BounceOffWalls(ref c);
 
+                Vector3Int newCell = CellCoords(c.Position);
+                if (newCell != oldCell)
+                {
+                    gridCells[CellIndex(oldCell)].Remove(i);
+                    gridCells[CellIndex(newCell)].Add(i);
+                }
+
                 craigles[i] = c;
             }
         }
+
+        // Checks for how many cells we actually need, then builds the array (at most once) 
+        // using PerceptionRadius and BoundsSize. Cell size is actaully PerceptionRadius
+        // as reference, which should make it managable for 3x3x3 neighbor checks.
+        // Also made it so it rebuilds if the ScriptableObject changes for PerceptionRadius and BoundsSize
+        private void EnsureGrid()
+        {
+            // No perception?! Not allowed, always a value.
+            float cellSize = Mathf.Max(config.PerceptionRadius, 0.0001f);
+            if (gridCells != null && cachedCellSize == cellSize && cachedBoundsSize == config.BoundsSize) return;
+
+            cachedCellSize = cellSize;
+            cachedBoundsSize = config.BoundsSize;
+            cellsPerAxis = Mathf.Max(1, Mathf.CeilToInt(config.BoundsSize / cellSize));
+
+            // Total cell count is 1000 (from 10 * 10 * 10) cells using PerceptionRadius default settings.
+            gridCells = new List<int>[cellsPerAxis * cellsPerAxis * cellsPerAxis];
+            for (int i = 0; i < gridCells.Length; i++) gridCells[i] = new List<int>();
+        }
+
+        // First thing first, build the grid and add every craigle into a cell.
+        private void BuildGrid()
+        {
+            EnsureGrid();
+            foreach (List<int> cell in gridCells) cell.Clear();
+            for (int i = 0; i < craigles.Count; i++) gridCells[CellIndex(CellCoords(craigles[i].Position))].Add(i);
+        }
+
+        // Turns a world position into a (x, y, z) cell coordinate. 
+        // Value is clamped so a craigle on the edge (or outside) of the cube stays in a cell instead of being invalid.
+        private Vector3Int CellCoords(Vector3 position)
+        {
+            int ix = Mathf.Clamp(Mathf.FloorToInt(position.x / cachedCellSize), 0, cellsPerAxis - 1);
+            int iy = Mathf.Clamp(Mathf.FloorToInt(position.y / cachedCellSize), 0, cellsPerAxis - 1);
+            int iz = Mathf.Clamp(Mathf.FloorToInt(position.z / cachedCellSize), 0, cellsPerAxis - 1);
+            return new Vector3Int(ix, iy, iz);
+        }
+        private int CellIndex(Vector3Int cell) => (cell.z * cellsPerAxis + cell.y) * cellsPerAxis + cell.x;
 
         /// <summary>
         /// Builds the array for neighborCounts per Craigle.
@@ -123,25 +177,48 @@ namespace Craigles
             float separationDistance = config.SeparationDistanceFactor * self.Size;
             float separationDistanceSqr = separationDistance * separationDistance;
 
-            int count = craigles.Count;
-            for (int j = 0; j < count; j++)
+            // Neighbors can only ever be in our own cell or the 26 right next to it, since each cell
+            // is PerceptionRadius wide so anything farther than that isn't counted.
+            Vector3Int center = CellCoords(self.Position);
+            for (int dz = -1; dz <= 1; dz++)
             {
-                if (j == index) continue;
+                int iz = center.z + dz;
+                if (iz < 0 || iz >= cellsPerAxis) continue; // off the grid, skip the whole slice
 
-                CraigleData other = craigles[j];
-                Vector3 offset = other.Position - self.Position;
-                float sqrDist = offset.sqrMagnitude;
-                if (sqrDist > perceptionSqr) continue;
-
-                neighborCount++;
-                centroidSum += other.Position;
-                velocitySum += other.Velocity;
-
-                if (sqrDist < separationDistanceSqr && sqrDist > 0.0001f)
+                for (int dy = -1; dy <= 1; dy++)
                 {
-                    float dist = Mathf.Sqrt(sqrDist);
-                    float attenuation = 1f - (dist / separationDistance);
-                    separationSum += -offset / dist * attenuation;
+                    int iy = center.y + dy;
+                    if (iy < 0 || iy >= cellsPerAxis) continue; // ditto
+
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        int ix = center.x + dx;
+                        if (ix < 0 || ix >= cellsPerAxis) continue; // ditto
+
+                        // Whoever's actually parked in this cell right now, usually just a handful.
+                        List<int> cell = gridCells[CellIndex(new Vector3Int(ix, iy, iz))];
+                        for (int n = 0; n < cell.Count; n++)
+                        {
+                            int j = cell[n];
+                            if (j == index) continue;
+
+                            CraigleData other = craigles[j];
+                            Vector3 offset = other.Position - self.Position;
+                            float sqrDist = offset.sqrMagnitude;
+                            if (sqrDist > perceptionSqr) continue; // shares the cell but still too far despite it
+
+                            neighborCount++;
+                            centroidSum += other.Position;
+                            velocitySum += other.Velocity;
+
+                            if (sqrDist < separationDistanceSqr && sqrDist > 0.0001f)
+                            {
+                                float dist = Mathf.Sqrt(sqrDist);
+                                float attenuation = 1f - (dist / separationDistance);
+                                separationSum += -offset / dist * attenuation;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -248,14 +325,14 @@ namespace Craigles
 
             if (pendingMitosisParents.Count == 0 && pendingDeaths.Count == 0) return;
 
-            toRemoveScratch.Clear();
-            foreach (int idx in pendingMitosisParents) toRemoveScratch.Add(idx);
-            foreach (int idx in pendingDeaths) toRemoveScratch.Add(idx);
+            toRemoveCraigles.Clear();
+            foreach (int idx in pendingMitosisParents) toRemoveCraigles.Add(idx);
+            foreach (int idx in pendingDeaths) toRemoveCraigles.Add(idx);
 
             nextGenerationBuffer.Clear();
             for (int i = 0; i < count; i++)
             {
-                if (toRemoveScratch.Contains(i)) continue;
+                if (toRemoveCraigles.Contains(i)) continue;
                 nextGenerationBuffer.Add(craigles[i]);
             }
 
@@ -299,7 +376,7 @@ namespace Craigles
             {
                 int victim = Random.Range(0, craigles.Count);
                 int last = craigles.Count - 1;
-                craigles[victim] = craigles[last]; // swap-and-pop: O(1) removal, order doesn't matter
+                craigles[victim] = craigles[last];
                 craigles.RemoveAt(last);
             }
         }
