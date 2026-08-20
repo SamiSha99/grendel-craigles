@@ -21,7 +21,8 @@ namespace Craigles
             SwarmConfig config = simulation.Config;
 
             mesh = config.CraigleMesh != null ? config.CraigleMesh : BuildTriangleMesh();
-            material = config.CraigleMaterial != null ? config.CraigleMaterial : BuildInstancedMaterial();
+            material = BuildInstancedMaterial();
+
             propertyBlock = new MaterialPropertyBlock();
 
             int capacity = Mathf.Max(1, config.MaxPopulation);

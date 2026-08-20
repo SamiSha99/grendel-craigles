@@ -46,8 +46,8 @@ namespace Craigles
         [Range(1, 1023)] public int MaxPopulation = 500;
 
         [Header("Rendering")]
+        [Tooltip("Optional. Leave to use the triangle mesh. Recommended to set VisualScaleMultiplier to lower.")]
         public Mesh CraigleMesh;
-        public Material CraigleMaterial;
         public float VisualScaleMultiplier = 5f; // Since its 100^3 size cube might as well make it slightly larger in render
     }
 }
