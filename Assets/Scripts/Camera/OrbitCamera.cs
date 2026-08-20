@@ -25,10 +25,12 @@ namespace Craigles
                 target = new Vector3(half, half, half);
             }
 
-            // Start from wherever the camera is already pointed.
-            Vector3 angles = transform.eulerAngles;
+            // Nudge it at the start to where it spawns the craigles
+            Vector3 lookDirection = (Vector3.zero - target).normalized;
+            Vector3 angles = Quaternion.LookRotation(lookDirection).eulerAngles;
             yaw = angles.y;
-            pitch = angles.x;
+            pitch = angles.x > 180f ? angles.x - 360f : angles.x;
+            pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
         }
 
         private void LateUpdate()
