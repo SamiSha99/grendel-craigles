@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e0d15f6ce3c4244ca50ba8ade3b2734, type: 3}
-  m_Name: SwarmConfig
+  m_Name: Swarm Deathless Cubes
   m_EditorClassIdentifier: Assembly-CSharp::Craigles.SwarmConfig
   BoundsSize: 100
   SpawnRate: 1
@@ -31,7 +31,6 @@ MonoBehaviour:
   MitosisVelocityBend: 30
   CrowdingNeighborThreshold: 100
   CrowdingDeathChance: 0.2
-  MaxPopulation: 500
-  CraigleMesh: {fileID: 0}
-  CraigleMaterial: {fileID: 0}
-  VisualScaleMultiplier: 5
+  MaxPopulation: 1000
+  CraigleMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  VisualScaleMultiplier: 1

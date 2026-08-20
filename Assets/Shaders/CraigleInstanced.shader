@@ -1,7 +1,11 @@
 Shader "Craigles/InstancedColor"
 {
     // Very dirty to get it to work but at least makes the colors visible now.
-    // I sadly don't know much about Unity's
+    Properties
+    {
+        [PerRendererData] _BaseColor ("Base Color", Color) = (1, 1, 1, 1)
+    }
+
     SubShader
     {
         Tags { "RenderType"="Opaque" "RenderPipeline"="UniversalPipeline" "Queue"="Geometry" }
