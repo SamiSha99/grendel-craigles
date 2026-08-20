@@ -14,7 +14,7 @@ The object, Craigle Simulation contains all the code functionality including cal
 
 ## Configs
 
-Inside `CraigleSimulation`, `Conifg` needs a `SwarmConfig` attached to it.
+Inside `CraigleSimulation`, `Config` needs a `SwarmConfig` attached to it.
 
 <img src="https://i.imgur.com/MDfSyed.png" width="400">
 
