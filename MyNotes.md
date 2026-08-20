@@ -9,6 +9,7 @@
 ## Found sorces
 
 1. It seems the algorithm is called Boids from researching, I'm guess Craigle is flavor? https://en.wikipedia.org/wiki/Boids
+    - Oh wait its literally named after the guy ok lol.
 2. Will be using DrawMeshInstanced, but it has a limit of 1023, courtesy of the docs. https://docs.unity3d.com/6000.5/Documentation/ScriptReference/Graphics.DrawMeshInstanced.html
 
 ### Other
