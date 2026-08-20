@@ -42,7 +42,8 @@ namespace Craigles
         [Header("Crowding")]
         public int CrowdingNeighborThreshold = 100;
         [Range(0f, 1f)] public float CrowdingDeathChance = 0.2f;
-        public int MaxPopulation = 500;
+        [Tooltip("The max population, Unity's Graphics.DrawMeshInstanced does not allow more than 1023.")]
+        [Range(1, 1023)] public int MaxPopulation = 500;
 
         [Header("Rendering")]
         public Mesh CraigleMesh;
