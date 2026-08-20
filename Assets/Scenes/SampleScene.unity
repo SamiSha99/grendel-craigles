@@ -432,7 +432,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0821c60ef81b4a44b330d0135d14415, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Craigles.CraigleSimulation
-  config: {fileID: 11400000, guid: 135e5676e80b7ae4cb1ee79dc652802f, type: 2}
+  config: {fileID: 11400000, guid: e018c8cbe764b40489c9d179b575d37b, type: 2}
 --- !u!4 &803459539
 Transform:
   m_ObjectHideFlags: 0
